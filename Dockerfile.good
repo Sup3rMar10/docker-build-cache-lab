@@ -1,0 +1,12 @@
+# syntax=docker/dockerfile:1
+# GOOD ordering: dependencies change rarely, source changes constantly. Put the slow,
+# stable step first so its layer stays cached when only source changes.
+FROM python:3.12-slim
+WORKDIR /srv
+COPY app/requirements.txt .
+# BuildKit cache mount: pip's download cache persists between builds, even when this layer re-runs.
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+COPY app/ .
+RUN useradd --uid 10001 --no-create-home appuser
+USER appuser
+CMD ["python", "main.py"]
